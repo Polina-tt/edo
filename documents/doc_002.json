@@ -1,0 +1,14 @@
+{
+  "id": "DOC-002",
+  "type": "invoice",
+  "title": "Рахунок за консультаційні послуги",
+  "author": "Фінансовий відділ",
+  "created_at": "2026-10-05",
+  "status": "pending",
+  "version": 1,
+  "invoice_number": "INV-2026-002",
+  "customer": "ПП «Мережі та зв'язок»",
+  "amount": 8500.00,
+  "currency": "UAH",
+  "due_date": "2026-10-20"
+}

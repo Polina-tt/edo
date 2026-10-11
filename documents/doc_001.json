@@ -1,0 +1,14 @@
+{
+  "id": "DOC-001",
+  "type": "invoice",
+  "title": "Рахунок за ліцензію на ПЗ",
+  "author": "Головний бухгалтер",
+  "created_at": "2026-10-01",
+  "status": "issued",
+  "version": 1,
+  "invoice_number": "INV-2026-001",
+  "customer": "ТОВ «Технології майбутнього»",
+  
+  "currency": "UAH",
+  "due_date": "2026-10-15"
+}

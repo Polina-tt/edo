@@ -1,0 +1,14 @@
+{
+  "id": "DOC-004",
+  "type": "invoice",
+  "title": "Рахунок за оновлення обладнання",
+  "author": "Технічний відділ",
+  "created_at": "2026-10-10",
+  "status": "issued",
+  "version": 1,
+  "invoice_number": "INV-2026-004",
+  "customer": "АТ «Спектр»",
+  "amount": 21000.00,
+  "currency": "UAH",
+  "due_date": "2026-10-30"
+}
