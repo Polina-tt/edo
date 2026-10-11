@@ -18,7 +18,7 @@ lab1_document_model/
     ├── doc_002.json
     ├── doc_003.json
     └── doc_004.json
-
+```
     Команда **`python3 main.py`** запускає інтерпретатор Python для виконання програми з файлу `main.py`.
 
     
