@@ -1,104 +1,120 @@
 import json
-from pathlib import Path
+import os
+from datetime import datetime
 
-# 1. Визначаємо список обов'язкових загальних полів згідно з вимогами лабораторної
-GENERAL_FIELDS = [
-    "id", "type", "title", "author", "created_at", "status", "version"
-]
+class ElectronicDocument:
+    # Правила переходів для Варіанта 1 (Заява студента)
+    ALLOWED_TRANSITIONS = {
+        "draft": ["submitted"],
+        "submitted": ["review"],
+        "review": ["approved", "rejected"],
+        "approved": ["archived"],
+        "rejected": ["draft"],  # Повернення у draft для виправлення
+        "archived": []          # Кінцевий стан
+    }
 
-# 2. Визначаємо специфічні поля для нашого варіанта (Рахунок)
-VARIANT_FIELDS = [
-    "invoice_number", "customer", "amount", "currency", "due_date"
-]
+    def __init__(self, data: dict):
+        self.id = data.get("id")
+        self.type = data.get("type", "student_application")
+        self.title = data.get("title")
+        self.author = data.get("author")
+        self.created_at = data.get("created_at", datetime.now().strftime("%Y-%m-%d"))
+        self.status = data.get("status", "draft")
+        self.version = data.get("version", 1)
+        self.content = data.get("content", "")
+        self.history = data.get("history", [])
 
-# Об'єднуємо їх у єдиний список для перевірки
-ALL_REQUIRED_FIELDS = GENERAL_FIELDS + VARIANT_FIELDS
+    @classmethod
+    def load_from_json(cls, filename: str):
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return cls(data)
 
-def main():
-    # Вказуємо шлях до каталогу з документами
-    docs_dir = Path("documents")
-    
-    # Перевіряємо, чи існує така папка взагалі
-    if not docs_dir.exists() or not docs_dir.is_dir():
-        print(f"Помилка: каталог '{docs_dir}' не знайдено.")
-        return
+    def save_to_json(self, filename: str):
+        data = {
+            "id": self.id,
+            "type": self.type,
+            "title": self.title,
+            "author": self.author,
+            "created_at": self.created_at,
+            "status": self.status,
+            "version": self.version,
+            "content": self.content,
+            "history": self.history
+        }
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        print(f"[Збережено] Зміни записано у файл {filename}")
 
-    # АВТОМАТИЧНИЙ ПОШУК: метод glob знаходить усі файли з розширенням .json у папці
-    # Це відповідає вимозі, щоб ми не прописували назви файлів вручну в коді!
-    json_files = list(docs_dir.glob("*.json"))
-    
-    if not json_files:
-        print(f"У каталозі '{docs_dir}' не знайдено жодного файлу .json")
-        return
+    def change_status(self, new_status: str, author: str = "system"):
+        if self.status == "archived":
+            raise PermissionError("Помилка: документ в архіві, зміна статусу неможлива.")
 
-    print(f"Знайдено файлів для перевірки: {len(json_files)}\n" + "=" * 50)
+        allowed_next = self.ALLOWED_TRANSITIONS.get(self.status, [])
+        if new_status not in allowed_next:
+            raise ValueError(f"Заборонений перехід: з '{self.status}' у '{new_status}'. Дозволено: {allowed_next}")
 
-    loaded_documents = []
-    seen_ids = set()       # Множина для збереження вже знайдених ID (потрібна для перевірки унікальності)
-    duplicate_ids = set()  # Множина для виявлених дублікатів ID
+        old_status = self.status
+        self.status = new_status
+        
+        # Запис в історію з міткою часу
+        self.history.append({
+            "from_status": old_status,
+            "to_status": new_status,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "author": author
+        })
+        print(f"[Статус] Успішно змінено: {old_status} ➔ {new_status}")
 
-    # ЕТАП 1: Читання файлів та збір ID
-    for file_path in json_files:
-        try:
-            # Відкриваємо кожен файл у кодуванні utf-8
-            with open(file_path, "r", encoding="utf-8") as f:
-                # json.load перетворює текст JSON у словник Python
-                doc_data = json.load(f)
-                
-                # Перевіряємо, чи є вміст файлу словником (об'єктом)
-                if not isinstance(doc_data, dict):
-                    print(f"[ПОМИЛКА] Файл {file_path.name}: вміст не є об'єктом JSON.")
-                    continue
-                
-                # Зберігаємо ім'я файлу всередині словника для зручності виведення
-                doc_data["_filename"] = file_path.name
-                loaded_documents.append(doc_data)
-                
-                # ПЕРЕВІРКА УНІКАЛЬНОСТІ ID:
-                doc_id = doc_data.get("id")
-                if doc_id:
-                    if doc_id in seen_ids:
-                        duplicate_ids.add(doc_id)  # Якщо ID вже зустрічався — додаємо до дублікатів
-                    else:
-                        seen_ids.add(doc_id)     # Інакше запам'ятовуємо його
-                        
-        except json.JSONDecodeError as e:
-            # Обробка синтаксичних помилок у JSON (наприклад, пропущена кома чи лапка)
-            print(f"[ПОМИЛКА] Файл {file_path.name}: синтаксична помилка JSON ({e})")
-        except Exception as e:
-            print(f"[ПОМИЛКА] Файл {file_path.name}: {e}")
+    def update_content(self, new_content: str):
+        if self.status == "archived":
+            raise PermissionError("Редагування заборонено: документ в архіві.")
 
-    print("Результати перевірки та валідації документів:\n" + "-" * 50)
-
-    # ЕТАП 2: Перевірка структури (наявність обов'язкових полів) та виведення результатів
-    for doc in loaded_documents:
-        filename = doc.get("_filename")
-        doc_id = doc.get("id", "НЕВІДОМИЙ")
-        errors = []
-
-        # Шукаємо, яких обов'язкових полів не вистачає у поточному документі
-        missing_fields = [field for field in ALL_REQUIRED_FIELDS if field not in doc]
-        if missing_fields:
-            errors.append(f"відсутні обов'язкові поля: {', '.join(missing_fields)}")
-
-        # Перевіряємо, чи повторюється ID цього документа в інших файлах
-        if doc_id in duplicate_ids:
-            errors.append(f"ідентифікатор '{doc_id}' дублюється в іншому документі!")
-
-        # Виводимо результат залежно від наявності помилок
-        if errors:
-            print(f" Файл: documents/{filename} (ID: {doc_id}) — ПОМИЛКА")
-            for err in errors:
-                print(f"   ↳ {err}")
-            print()
+        if new_content != self.content:
+            self.content = new_content
+            self.version += 1
+            print(f"[Версія] Вміст змінено. Номер версії збільшено до: v{self.version}")
         else:
-            print(f" Файл: documents/{filename} — УСПІШНО")
-            print(f"   • ID: {doc['id']} | Номер: {doc['invoice_number']}")
-            print(f"   • Назва: {doc['title']}")
-            print(f"   • Клієнт: {doc['customer']} | Сума: {doc['amount']} {doc['currency']}")
-            print(f"   • Автор: {doc['author']} | Створено: {doc['created_at']}")
-            print(f"   • Термін оплати: {doc['due_date']} | Статус: {doc['status']} (Версія: {doc['version']})")
-            print()
+            print("[Інформація] Змін у змісті немає, версія не змінилася.")
+
+    def display_info(self):
+        print(f"\n--- ДОКУМЕНТ: {self.id} | Статус: [{self.status.upper()}] | Версія: v{self.version} ---")
+        print(f"Назва: {self.title}")
+        print(f"Зміст: {self.content}")
+        print("Історія змін:")
+        if not self.history:
+            print("  (історія порожня)")
+        for idx, h in enumerate(self.history, 1):
+            print(f"  {idx}. [{h['timestamp']}] {h['from_status']} ➔ {h['to_status']} (Користувач: {h['author']})")
+        print("-" * 60)
+
 
 if __name__ == "__main__":
-    main()
+    filename = "document.json"
+
+    # 1. Завантажуємо документ із файлу
+    doc = ElectronicDocument.load_from_json(filename)
+    doc.display_info()
+
+    # 2. Перевіряємо коректний перехід
+    doc.change_status("submitted", author="student_ivan")
+
+    # 3. Перевіряємо блокування забороненого переходу
+    try:
+        doc.change_status("approved", author="dean_office")
+    except ValueError as e:
+        print(f"\n[Захист спрацював]: {e}\n")
+
+    # 4. Редагуємо зміст (має збільшитися версія)
+    doc.update_content("Оновлений текст заяви після консультації.")
+
+    # 5. Продовжуємо життєвий цикл
+    doc.change_status("review", author="dean_office")
+    doc.change_status("rejected", author="dean_office")
+    doc.change_status("draft", author="student_ivan") # Повернення у draft
+
+    # 6. Зберігаємо результати назад у JSON-файл
+    doc.save_to_json(filename)
+    
+    # Виводимо фінальний стан
+    doc.display_info()

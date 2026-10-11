@@ -1,0 +1,36 @@
+{
+    "id": "DOC-STUDENT-01",
+    "type": "student_application",
+    "title": "Заява на переведення",
+    "author": "student_ivan",
+    "created_at": "2026-10-11",
+    "status": "draft",
+    "version": 2,
+    "content": "Оновлений текст заяви після консультації.",
+    "history": [
+        {
+            "from_status": "draft",
+            "to_status": "submitted",
+            "timestamp": "2026-10-11 10:30:24",
+            "author": "student_ivan"
+        },
+        {
+            "from_status": "submitted",
+            "to_status": "review",
+            "timestamp": "2026-10-11 10:30:24",
+            "author": "dean_office"
+        },
+        {
+            "from_status": "review",
+            "to_status": "rejected",
+            "timestamp": "2026-10-11 10:30:24",
+            "author": "dean_office"
+        },
+        {
+            "from_status": "rejected",
+            "to_status": "draft",
+            "timestamp": "2026-10-11 10:30:24",
+            "author": "student_ivan"
+        }
+    ]
+}
