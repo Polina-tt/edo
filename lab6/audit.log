@@ -1,0 +1,9 @@
+2026-11-16T21:59:48.291513 | user:user_01 | role:employee | action:edit | doc:doc-001 | result:success
+2026-11-16T21:59:48.295969 | user:user_01 | role:employee | action:approve | doc:doc-001 | result:denied
+2026-11-16T23:11:52.180234 | user:user_01 | role:employee | action:create | doc:APP-001 | result:201 Created
+2026-11-16T23:21:52.198275 | user:user_01 | role:employee | action:create | doc:APP-001 | result:409 Conflict (Duplicate ID)
+2026-11-17T00:09:16.549915 | user:user_01 | role:employee | action:edit | doc:APP-001 | result:200 OK
+2026-11-17T00:20:45.477736 | user:manager_01 | role:manager | action:approve | doc:APP-001 | result:409 Conflict (current=draft)
+2026-11-17T00:21:54.392876 | user:user_01 | role:employee | action:approve | doc:APP-001 | result:denied (403 Forbidden)
+2026-11-17T00:25:11.462495 | user:user_01 | role:employee | action:submit | doc:APP-001 | result:success -> submitted
+2026-11-17T00:26:51.624591 | user:manager_01 | role:manager | action:approve | doc:APP-001 | result:success -> approved
