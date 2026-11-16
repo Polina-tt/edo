@@ -1,0 +1,2 @@
+2026-11-16T21:59:48.291513 | user:user_01 | role:employee | action:edit | doc:doc-001 | result:success
+2026-11-16T21:59:48.295969 | user:user_01 | role:employee | action:approve | doc:doc-001 | result:denied
